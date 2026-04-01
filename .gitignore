@@ -1,0 +1,3 @@
+# Project exclude paths
+/merchants-system/storage/app/
+/merchants-system/storage/framework/
