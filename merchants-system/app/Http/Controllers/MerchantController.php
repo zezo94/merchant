@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Merchant;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -10,21 +12,14 @@ class MerchantController extends Controller
 {
     public function index(Request $request)
     {
-        $columns = $this->getSelectedColumns($request);
-        $printColumns = $this->getSelectedPrintColumns($request);
+        [$query, $columns, $printColumns, $sort, $direction] = $this->buildMerchantsFilteredQuery($request);
 
-        [$sort, $direction] = $this->resolveSorting($request);
-
-        $query = $this->filteredMerchantsQuery($request)
-            ->with(['phones', 'mobiles', 'emails', 'faxes']);
-
-        if ($request->filled('selected_ids') && is_array($request->selected_ids)) {
-            $query->whereIn('id', $request->selected_ids);
-        }
+        $perPage = $this->resolvePerPage($request);
 
         $merchants = $query
+            ->with($this->merchantRelationsForList())
             ->orderBy($sort, $direction)
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
 
         return view('merchants.index', compact(
@@ -50,10 +45,20 @@ class MerchantController extends Controller
 
         $merchant = Merchant::create($validated);
 
-        $this->syncSimpleRows($merchant, 'phones', $request->phones);
-        $this->syncSimpleRows($merchant, 'mobiles', $request->mobiles);
-        $this->syncSimpleRows($merchant, 'emails', $request->emails);
-        $this->syncSimpleRows($merchant, 'faxes', $request->faxes);
+        $this->syncSimpleRows($merchant, 'phones', $request->input('phones'));
+        $this->syncSimpleRows($merchant, 'mobiles', $request->input('mobiles'));
+        $this->syncSimpleRows($merchant, 'emails', $request->input('emails'));
+        $this->syncSimpleRows($merchant, 'faxes', $request->input('faxes'));
+
+        $merchant->load($this->merchantRelationsForList());
+
+        ActivityLogService::log(
+            action: 'merchant_created',
+            target: $merchant,
+            description: 'تم إنشاء تاجر جديد',
+            oldValues: null,
+            newValues: $this->extractLoggableMerchantValues($merchant)
+        );
 
         return redirect()
             ->route('merchants.index')
@@ -62,14 +67,24 @@ class MerchantController extends Controller
 
     public function show(Merchant $merchant)
     {
-        $merchant->load(['phones', 'mobiles', 'emails', 'faxes']);
+        $merchant->load($this->merchantRelationsForList());
 
-        return view('merchants.show', compact('merchant'));
+        $merchantTimeline = collect();
+
+        if (auth()->user()?->is_root) {
+            $merchantTimeline = AuditLog::with('user')
+                ->where('target_type', Merchant::class)
+                ->where('target_id', $merchant->id)
+                ->latest()
+                ->get();
+        }
+
+        return view('merchants.show', compact('merchant', 'merchantTimeline'));
     }
 
     public function edit(Merchant $merchant)
     {
-        $merchant->load(['phones', 'mobiles', 'emails', 'faxes']);
+        $merchant->load($this->merchantRelationsForList());
 
         return view('merchants.edit', compact('merchant'));
     }
@@ -81,6 +96,9 @@ class MerchantController extends Controller
         $validated['contacted'] = $request->has('contacted');
         $validated['invited'] = $request->has('invited');
 
+        $merchant->load($this->merchantRelationsForList());
+        $oldValues = $this->extractLoggableMerchantValues($merchant);
+
         $merchant->update($validated);
 
         $merchant->phones()->delete();
@@ -88,10 +106,20 @@ class MerchantController extends Controller
         $merchant->emails()->delete();
         $merchant->faxes()->delete();
 
-        $this->syncSimpleRows($merchant, 'phones', $request->phones);
-        $this->syncSimpleRows($merchant, 'mobiles', $request->mobiles);
-        $this->syncSimpleRows($merchant, 'emails', $request->emails);
-        $this->syncSimpleRows($merchant, 'faxes', $request->faxes);
+        $this->syncSimpleRows($merchant, 'phones', $request->input('phones'));
+        $this->syncSimpleRows($merchant, 'mobiles', $request->input('mobiles'));
+        $this->syncSimpleRows($merchant, 'emails', $request->input('emails'));
+        $this->syncSimpleRows($merchant, 'faxes', $request->input('faxes'));
+
+        $merchant->load($this->merchantRelationsForList());
+
+        ActivityLogService::log(
+            action: 'merchant_updated',
+            target: $merchant,
+            description: 'تم تعديل بيانات تاجر',
+            oldValues: $oldValues,
+            newValues: $this->extractLoggableMerchantValues($merchant)
+        );
 
         return redirect()
             ->route('merchants.index')
@@ -100,6 +128,17 @@ class MerchantController extends Controller
 
     public function destroy(Merchant $merchant)
     {
+        $merchant->load($this->merchantRelationsForList());
+        $oldValues = $this->extractLoggableMerchantValues($merchant);
+
+        ActivityLogService::log(
+            action: 'merchant_deleted',
+            target: $merchant,
+            description: 'تم حذف تاجر',
+            oldValues: $oldValues,
+            newValues: null
+        );
+
         $merchant->delete();
 
         return redirect()
@@ -109,47 +148,36 @@ class MerchantController extends Controller
 
     public function print(Request $request)
     {
-        $columns = $this->getSelectedPrintColumns($request);
-        [$sort, $direction] = $this->resolveSorting($request);
-
-        $query = $this->filteredMerchantsQuery($request)
-            ->with(['phones', 'mobiles', 'emails', 'faxes']);
-
-        if ($request->filled('selected_ids') && is_array($request->selected_ids)) {
-            $query->whereIn('id', $request->selected_ids);
-        }
+        [$query, $columns, $printColumns, $sort, $direction] = $this->buildMerchantsFilteredQuery($request);
 
         $merchants = $query
+            ->with($this->merchantRelationsForList())
             ->orderBy($sort, $direction)
             ->get();
 
-        return view('merchants.print', compact('merchants', 'columns'));
+        return view('merchants.print', [
+            'merchants' => $merchants,
+            'columns' => $printColumns,
+        ]);
     }
 
     public function export(Request $request): StreamedResponse
     {
-        $columns = $this->getSelectedPrintColumns($request);
-        [$sort, $direction] = $this->resolveSorting($request);
-
-        $query = $this->filteredMerchantsQuery($request)
-            ->with(['phones', 'mobiles', 'emails', 'faxes']);
-
-        if ($request->filled('selected_ids') && is_array($request->selected_ids)) {
-            $query->whereIn('id', $request->selected_ids);
-        }
+        [$query, $columns, $printColumns, $sort, $direction] = $this->buildMerchantsFilteredQuery($request);
 
         $merchants = $query
+            ->with($this->merchantRelationsForList())
             ->orderBy($sort, $direction)
             ->get();
 
-        return response()->streamDownload(function () use ($merchants, $columns) {
+        return response()->streamDownload(function () use ($merchants, $printColumns) {
             $handle = fopen('php://output', 'w');
 
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($handle, $this->buildCsvHeader($columns));
+            fputcsv($handle, $this->buildCsvHeader($printColumns));
 
             foreach ($merchants as $merchant) {
-                fputcsv($handle, $this->buildCsvRow($merchant, $columns));
+                fputcsv($handle, $this->buildCsvRow($merchant, $printColumns));
             }
 
             fclose($handle);
@@ -160,17 +188,35 @@ class MerchantController extends Controller
 
     public function inlineUpdate(Request $request, Merchant $merchant)
     {
-        $validated = $request->validate([
+        $request->validate([
             'contacted' => ['nullable', 'boolean'],
             'invited' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $oldValues = [
+            'contacted' => $merchant->contacted,
+            'invited' => $merchant->invited,
+            'notes' => $merchant->notes,
+        ];
 
         $merchant->update([
             'contacted' => $request->boolean('contacted'),
             'invited' => $request->boolean('invited'),
             'notes' => $request->input('notes'),
         ]);
+
+        ActivityLogService::log(
+            action: 'merchant_inline_updated',
+            target: $merchant,
+            description: 'تم تحديث سريع لبيانات التاجر',
+            oldValues: $oldValues,
+            newValues: [
+                'contacted' => $merchant->contacted,
+                'invited' => $merchant->invited,
+                'notes' => $merchant->notes,
+            ]
+        );
 
         return response()->json([
             'success' => true,
@@ -182,6 +228,22 @@ class MerchantController extends Controller
                 'notes' => $merchant->notes,
             ],
         ]);
+    }
+
+    private function buildMerchantsFilteredQuery(Request $request): array
+    {
+        $columns = $this->getSelectedColumns($request);
+        $printColumns = $this->getSelectedPrintColumns($request);
+        [$sort, $direction] = $this->resolveSorting($request);
+
+        $query = $this->filteredMerchantsQuery($request);
+
+        $selectedIds = $this->getSelectedIds($request);
+        if (!empty($selectedIds)) {
+            $query->whereIn('id', $selectedIds);
+        }
+
+        return [$query, $columns, $printColumns, $sort, $direction];
     }
 
     private function filteredMerchantsQuery(Request $request)
@@ -209,8 +271,7 @@ class MerchantController extends Controller
         }
 
         if ($request->filled('sector')) {
-            $sector = trim($request->sector);
-            $query->where('sector', 'like', '%' . $sector . '%');
+            $query->where('sector', 'like', '%' . trim($request->sector) . '%');
         }
 
         if ($request->filled('street')) {
@@ -278,11 +339,11 @@ class MerchantController extends Controller
         }
 
         if ($request->contacted !== null && $request->contacted !== '') {
-            $query->where('contacted', $request->contacted);
+            $query->where('contacted', (int) $request->contacted);
         }
 
         if ($request->invited !== null && $request->invited !== '') {
-            $query->where('invited', $request->invited);
+            $query->where('invited', (int) $request->invited);
         }
 
         if ($request->filled('global')) {
@@ -363,22 +424,22 @@ class MerchantController extends Controller
             return;
         }
 
+        $column = match ($relation) {
+            'phones' => 'phone',
+            'mobiles' => 'mobile',
+            'emails' => 'email',
+            'faxes' => 'fax',
+            default => null,
+        };
+
+        if (!$column) {
+            return;
+        }
+
         foreach ($values as $value) {
             $value = trim((string) $value);
 
             if ($value === '') {
-                continue;
-            }
-
-            $column = match ($relation) {
-                'phones' => 'phone',
-                'mobiles' => 'mobile',
-                'emails' => 'email',
-                'faxes' => 'fax',
-                default => null,
-            };
-
-            if (!$column) {
                 continue;
             }
 
@@ -448,7 +509,9 @@ class MerchantController extends Controller
             return $this->getDefaultColumns();
         }
 
-        return array_values(array_intersect($columns, $allowedColumns));
+        $selected = array_values(array_intersect($columns, $allowedColumns));
+
+        return !empty($selected) ? $selected : $this->getDefaultColumns();
     }
 
     private function getSelectedPrintColumns(Request $request): array
@@ -460,7 +523,9 @@ class MerchantController extends Controller
             return $this->getSelectedColumns($request);
         }
 
-        return array_values(array_intersect($printColumns, $allowedColumns));
+        $selected = array_values(array_intersect($printColumns, $allowedColumns));
+
+        return !empty($selected) ? $selected : $this->getSelectedColumns($request);
     }
 
     private function buildCsvHeader(array $columns): array
@@ -566,5 +631,150 @@ class MerchantController extends Controller
         }
 
         return [$sort, $direction];
+    }
+
+    private function resolvePerPage(Request $request): int
+    {
+        $perPage = (int) $request->get('per_page', 20);
+
+        return in_array($perPage, [10, 25, 50, 100, 200], true) ? $perPage : 20;
+    }
+
+    private function getSelectedIds(Request $request): array
+    {
+        $selectedIds = $request->input('selected_ids', []);
+
+        if (!is_array($selectedIds)) {
+            return [];
+        }
+
+        return collect($selectedIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function merchantRelationsForList(): array
+    {
+        return ['phones', 'mobiles', 'emails', 'faxes'];
+    }
+
+    private function extractLoggableMerchantValues(Merchant $merchant): array
+    {
+        return [
+            'organization_name' => $merchant->organization_name,
+            'membership_no' => $merchant->membership_no,
+            'commercial_name' => $merchant->commercial_name,
+            'commercial_reg_no' => $merchant->commercial_reg_no,
+            'org_national_no' => $merchant->org_national_no,
+            'sector' => $merchant->sector,
+            'street' => $merchant->street,
+            'description' => $merchant->description,
+            'delegate_to_sign_on_management' => $merchant->delegate_to_sign_on_management,
+            'members' => $merchant->members,
+            'po_box' => $merchant->po_box,
+            'zipcode_desc' => $merchant->zipcode_desc,
+            'zipcode' => $merchant->zipcode,
+            'registered_date' => optional($merchant->registered_date)->format('Y-m-d'),
+            'commercial_reg_date' => optional($merchant->commercial_reg_date)->format('Y-m-d'),
+            'sub_date' => optional($merchant->sub_date)->format('Y-m-d'),
+            'ccate_id' => $merchant->ccate_id,
+            'contacted' => $merchant->contacted,
+            'invited' => $merchant->invited,
+            'notes' => $merchant->notes,
+            'phones' => $merchant->relationLoaded('phones') ? $merchant->phones->pluck('phone')->values()->all() : [],
+            'mobiles' => $merchant->relationLoaded('mobiles') ? $merchant->mobiles->pluck('mobile')->values()->all() : [],
+            'emails' => $merchant->relationLoaded('emails') ? $merchant->emails->pluck('email')->values()->all() : [],
+            'faxes' => $merchant->relationLoaded('faxes') ? $merchant->faxes->pluck('fax')->values()->all() : [],
+        ];
+    }
+
+
+
+//    public function printSingle(Merchant $merchant)
+//    {
+//        $merchant->load($this->merchantRelationsForList());
+//
+//        $columns = [
+//            'membership_no',
+//            'organization_name',
+//            'commercial_name',
+//            'commercial_reg_no',
+//            'org_national_no',
+//            'sector',
+//            'street',
+//            'description',
+//            'delegate',
+//            'members',
+//            'po_box',
+//            'zipcode_desc',
+//            'zipcode',
+//            'phones',
+//            'mobiles',
+//            'emails',
+//            'faxes',
+//            'registered_date',
+//            'commercial_reg_date',
+//            'contacted',
+//            'invited',
+//            'notes',
+//        ];
+//
+//        return view('merchants.print', [
+//            'merchants' => collect([$merchant]),
+//            'columns' => $columns,
+//        ]);
+//    }
+
+//    public function exportSingle(Merchant $merchant): \Symfony\Component\HttpFoundation\StreamedResponse
+//    {
+//        $merchant->load($this->merchantRelationsForList());
+//
+//        $columns = [
+//            'membership_no',
+//            'organization_name',
+//            'commercial_name',
+//            'commercial_reg_no',
+//            'org_national_no',
+//            'sector',
+//            'street',
+//            'description',
+//            'delegate',
+//            'members',
+//            'po_box',
+//            'zipcode_desc',
+//            'zipcode',
+//            'phones',
+//            'mobiles',
+//            'emails',
+//            'faxes',
+//            'registered_date',
+//            'commercial_reg_date',
+//            'contacted',
+//            'invited',
+//            'notes',
+//        ];
+//
+//        return response()->streamDownload(function () use ($merchant, $columns) {
+//            $handle = fopen('php://output', 'w');
+//
+//            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+//            fputcsv($handle, $this->buildCsvHeader($columns));
+//            fputcsv($handle, $this->buildCsvRow($merchant, $columns));
+//
+//            fclose($handle);
+//        }, 'merchant-' . $merchant->id . '.csv', [
+//            'Content-Type' => 'text/csv; charset=UTF-8',
+//        ]);
+//    }
+
+
+    public function printSingle(Merchant $merchant)
+    {
+        $merchant->load($this->merchantRelationsForList());
+
+        return view('merchants.print-single', compact('merchant'));
     }
 }

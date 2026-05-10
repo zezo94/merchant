@@ -64,7 +64,7 @@ class RolePermissionSeeder extends Seeder
 
         // إنشاء مستخدم أدمن افتراضي
         $admin = User::firstOrCreate(
-            ['email' => '[email protected]'],
+            ['email' => '[email prote cted]'],
             [
                 'name' => 'Admin User',
                 'password' => 'password123',
@@ -87,5 +87,5 @@ class RolePermissionSeeder extends Seeder
         if (!$user->hasRole('user')) {
             $user->assignRole('user');
         }
-    }
+     }
 }

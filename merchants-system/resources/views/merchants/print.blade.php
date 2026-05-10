@@ -5,58 +5,76 @@
     <title>طباعة التجار</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Tahoma, Arial, sans-serif;
             direction: rtl;
+            color: #111827;
             margin: 20px;
-            color: #000;
+            background: #fff;
         }
 
-        h2 {
-            margin-bottom: 15px;
+        .print-header {
+            margin-bottom: 18px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 12px;
         }
 
-        .meta {
-            margin-bottom: 15px;
+        .print-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .print-meta {
             font-size: 13px;
-            color: #333;
+            color: #4b5563;
+            line-height: 1.8;
         }
 
-        .no-print {
-            margin-bottom: 20px;
+        .print-toolbar {
+            margin-bottom: 16px;
         }
 
-        button {
+        .print-toolbar button {
             padding: 8px 14px;
-            margin-left: 8px;
+            border: 1px solid #9ca3af;
+            border-radius: 8px;
+            background: #f9fafb;
             cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .print-toolbar button:hover {
+            background: #f3f4f6;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            table-layout: auto;
             font-size: 12px;
         }
 
         th, td {
-            border: 1px solid #000;
-            padding: 6px;
+            border: 1px solid #d1d5db;
+            padding: 8px;
             text-align: right;
             vertical-align: top;
             word-break: break-word;
         }
 
         th {
-            background: #f1f1f1;
+            background: #f3f4f6;
+            font-weight: 700;
             white-space: nowrap;
         }
 
         .empty {
-            color: #666;
+            text-align: center;
+            color: #6b7280;
         }
 
         @media print {
-            .no-print {
+            .print-toolbar {
                 display: none;
             }
 
@@ -65,83 +83,99 @@
             }
 
             @page {
-                size: auto;
                 margin: 10mm;
+                size: landscape;
             }
         }
     </style>
 </head>
 <body>
+@php
+    $columnLabels = [
+        'id' => '#',
+        'membership_no' => 'رقم العضوية',
+        'organization_name' => 'اسم الشركة',
+        'commercial_name' => 'الاسم التجاري',
+        'commercial_reg_no' => 'رقم السجل التجاري',
+        'org_national_no' => 'الرقم الوطني',
+        'sector' => 'القطاع',
+        'street' => 'العنوان',
+        'description' => 'الوصف',
+        'delegate' => 'المفوّض بالتوقيع',
+        'members' => 'الأعضاء / الشركاء',
+        'po_box' => 'صندوق البريد',
+        'zipcode_desc' => 'وصف الرمز البريدي',
+        'zipcode' => 'الرمز البريدي',
+        'phones' => 'الهاتف',
+        'mobiles' => 'الموبايل',
+        'emails' => 'الايميل',
+        'faxes' => 'الفاكس',
+        'registered_date' => 'تاريخ التسجيل',
+        'commercial_reg_date' => 'تاريخ السجل التجاري',
+        'contacted' => 'تم التواصل',
+        'invited' => 'الدعوة',
+        'notes' => 'ملاحظات',
+    ];
+@endphp
 
-<div class="no-print">
+<div class="print-toolbar">
     <button onclick="window.print()">طباعة</button>
     <button onclick="window.close()">إغلاق</button>
 </div>
 
-<h2>نتائج التجار</h2>
-<div class="meta">
-    عدد السجلات: {{ $merchants->count() }}
+<div class="print-header">
+    <div class="print-title">تقرير التجار</div>
+    <div class="print-meta">
+        <div>عدد السجلات: {{ $merchants->count() }}</div>
+        <div>تاريخ الطباعة: {{ now()->format('Y-m-d H:i') }}</div>
+    </div>
 </div>
 
 <table>
     <thead>
     <tr>
-        @if(in_array('id', $columns)) <th>#</th> @endif
-        @if(in_array('membership_no', $columns)) <th>رقم العضوية</th> @endif
-        @if(in_array('organization_name', $columns)) <th>اسم الشركة</th> @endif
-        @if(in_array('commercial_name', $columns)) <th>الاسم التجاري</th> @endif
-        @if(in_array('commercial_reg_no', $columns)) <th>رقم السجل التجاري</th> @endif
-        @if(in_array('org_national_no', $columns)) <th>الرقم الوطني</th> @endif
-        @if(in_array('sector', $columns)) <th>القطاع</th> @endif
-        @if(in_array('street', $columns)) <th>العنوان</th> @endif
-        @if(in_array('description', $columns)) <th>الوصف</th> @endif
-        @if(in_array('delegate', $columns)) <th>المفوّض بالتوقيع</th> @endif
-        @if(in_array('members', $columns)) <th>الأعضاء / الشركاء</th> @endif
-        @if(in_array('po_box', $columns)) <th>صندوق البريد</th> @endif
-        @if(in_array('zipcode_desc', $columns)) <th>وصف الرمز البريدي</th> @endif
-        @if(in_array('zipcode', $columns)) <th>الرمز البريدي</th> @endif
-        @if(in_array('phones', $columns)) <th>الهاتف</th> @endif
-        @if(in_array('mobiles', $columns)) <th>الموبايل</th> @endif
-        @if(in_array('emails', $columns)) <th>الايميل</th> @endif
-        @if(in_array('faxes', $columns)) <th>الفاكس</th> @endif
-        @if(in_array('registered_date', $columns)) <th>تاريخ التسجيل</th> @endif
-        @if(in_array('commercial_reg_date', $columns)) <th>تاريخ السجل التجاري</th> @endif
-        @if(in_array('contacted', $columns)) <th>تم التواصل</th> @endif
-        @if(in_array('invited', $columns)) <th>الدعوة</th> @endif
-        @if(in_array('notes', $columns)) <th>ملاحظات</th> @endif
+        @foreach($columns as $column)
+            <th>{{ $columnLabels[$column] ?? $column }}</th>
+        @endforeach
     </tr>
     </thead>
-
     <tbody>
     @forelse($merchants as $merchant)
         <tr>
-            @if(in_array('id', $columns)) <td>{{ $merchant->id }}</td> @endif
-            @if(in_array('membership_no', $columns)) <td>{{ $merchant->membership_no }}</td> @endif
-            @if(in_array('organization_name', $columns)) <td>{{ $merchant->organization_name }}</td> @endif
-            @if(in_array('commercial_name', $columns)) <td>{{ $merchant->commercial_name }}</td> @endif
-            @if(in_array('commercial_reg_no', $columns)) <td>{{ $merchant->commercial_reg_no }}</td> @endif
-            @if(in_array('org_national_no', $columns)) <td>{{ $merchant->org_national_no }}</td> @endif
-            @if(in_array('sector', $columns)) <td>{{ $merchant->sector }}</td> @endif
-            @if(in_array('street', $columns)) <td>{{ $merchant->street }}</td> @endif
-            @if(in_array('description', $columns)) <td>{{ $merchant->description }}</td> @endif
-            @if(in_array('delegate', $columns)) <td>{{ $merchant->delegate_to_sign_on_management }}</td> @endif
-            @if(in_array('members', $columns)) <td>{{ $merchant->members }}</td> @endif
-            @if(in_array('po_box', $columns)) <td>{{ $merchant->po_box }}</td> @endif
-            @if(in_array('zipcode_desc', $columns)) <td>{{ $merchant->zipcode_desc }}</td> @endif
-            @if(in_array('zipcode', $columns)) <td>{{ $merchant->zipcode }}</td> @endif
-            @if(in_array('phones', $columns)) <td>{{ $merchant->phones->pluck('phone')->implode(' | ') }}</td> @endif
-            @if(in_array('mobiles', $columns)) <td>{{ $merchant->mobiles->pluck('mobile')->implode(' | ') }}</td> @endif
-            @if(in_array('emails', $columns)) <td>{{ $merchant->emails->pluck('email')->implode(' | ') }}</td> @endif
-            @if(in_array('faxes', $columns)) <td>{{ $merchant->faxes->pluck('fax')->implode(' | ') }}</td> @endif
-            @if(in_array('registered_date', $columns)) <td>{{ optional($merchant->registered_date)->format('Y-m-d') }}</td> @endif
-            @if(in_array('commercial_reg_date', $columns)) <td>{{ optional($merchant->commercial_reg_date)->format('Y-m-d') }}</td> @endif
-            @if(in_array('contacted', $columns)) <td>{{ $merchant->contacted ? 'نعم' : 'لا' }}</td> @endif
-            @if(in_array('invited', $columns)) <td>{{ $merchant->invited ? 'نعم' : 'لا' }}</td> @endif
-            @if(in_array('notes', $columns)) <td>{{ $merchant->notes }}</td> @endif
+            @foreach($columns as $column)
+                <td>
+                    @switch($column)
+                        @case('id') {{ $merchant->id }} @break
+                        @case('membership_no') {{ $merchant->membership_no ?: '-' }} @break
+                        @case('organization_name') {{ $merchant->organization_name ?: '-' }} @break
+                        @case('commercial_name') {{ $merchant->commercial_name ?: '-' }} @break
+                        @case('commercial_reg_no') {{ $merchant->commercial_reg_no ?: '-' }} @break
+                        @case('org_national_no') {{ $merchant->org_national_no ?: '-' }} @break
+                        @case('sector') {{ $merchant->sector ?: '-' }} @break
+                        @case('street') {{ $merchant->street ?: '-' }} @break
+                        @case('description') {{ $merchant->description ?: '-' }} @break
+                        @case('delegate') {{ $merchant->delegate_to_sign_on_management ?: '-' }} @break
+                        @case('members') {{ $merchant->members ?: '-' }} @break
+                        @case('po_box') {{ $merchant->po_box ?: '-' }} @break
+                        @case('zipcode_desc') {{ $merchant->zipcode_desc ?: '-' }} @break
+                        @case('zipcode') {{ $merchant->zipcode ?: '-' }} @break
+                        @case('phones') {{ $merchant->phones->pluck('phone')->implode(' | ') ?: '-' }} @break
+                        @case('mobiles') {{ $merchant->mobiles->pluck('mobile')->implode(' | ') ?: '-' }} @break
+                        @case('emails') {{ $merchant->emails->pluck('email')->implode(' | ') ?: '-' }} @break
+                        @case('faxes') {{ $merchant->faxes->pluck('fax')->implode(' | ') ?: '-' }} @break
+                        @case('registered_date') {{ optional($merchant->registered_date)->format('Y-m-d') ?: '-' }} @break
+                        @case('commercial_reg_date') {{ optional($merchant->commercial_reg_date)->format('Y-m-d') ?: '-' }} @break
+                        @case('contacted') {{ $merchant->contacted ? 'نعم' : 'لا' }} @break
+                        @case('invited') {{ $merchant->invited ? 'نعم' : 'لا' }} @break
+                        @case('notes') {{ $merchant->notes ?: '-' }} @break
+                        @default -
+                    @endswitch
+                </td>
+            @endforeach
         </tr>
     @empty
         <tr>
-            <td colspan="30" class="empty">لا توجد نتائج</td>
+            <td colspan="{{ max(count($columns), 1) }}" class="empty">لا توجد نتائج</td>
         </tr>
     @endforelse
     </tbody>
@@ -152,6 +186,5 @@
         window.print();
     };
 </script>
-
 </body>
 </html>

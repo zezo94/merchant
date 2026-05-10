@@ -18,6 +18,10 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         Gate::before(function ($user, $ability) {
+            if ($user->is_root) {
+                return true;
+            }
+
             return $user->hasRole('super-admin') ? true : null;
         });
     }

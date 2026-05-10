@@ -1,0 +1,10 @@
+.app-footer {
+    color: #6c757d;
+    font-size: 14px;
+    border-top: 1px solid #e9ecef;
+    background: #fff;
+}
+
+.app-footer-copy {
+    font-weight: 600;
+}

@@ -1,0 +1,188 @@
+.app-navbar {
+    background: #ffffff;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.app-navbar-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.app-navbar-topbar {
+    min-height: 52px;
+}
+
+.app-brand {
+    color: #0f172a;
+    font-size: 1.2rem;
+    line-height: 1;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.app-brand:hover {
+    color: #111827;
+}
+
+.app-brand-text {
+    display: inline-block;
+    letter-spacing: 0.2px;
+}
+
+.app-navbar-toggler {
+    border-radius: 12px;
+    padding: 0.55rem 0.8rem;
+}
+
+.app-navbar-collapse {
+    width: 100%;
+}
+
+.app-navbar-main-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.app-navbar-user-area {
+    flex: 0 0 auto;
+}
+
+.app-navbar-spacer {
+    flex: 1 1 auto;
+}
+
+.app-navbar-nav {
+    flex: 0 0 auto;
+}
+
+.app-navbar .btn {
+    border-radius: 12px;
+    font-weight: 500;
+    min-height: 38px;
+    padding-inline: 0.9rem;
+}
+
+.app-user-dropdown-btn {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #334155;
+    border-radius: 14px;
+    padding-inline: 0.75rem;
+    min-height: 40px;
+}
+
+.app-user-dropdown-btn:hover,
+.app-user-dropdown-btn:focus,
+.app-user-dropdown-btn:active {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.18);
+}
+
+.navbar-user-name {
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.app-user-dropdown-menu {
+    min-width: 220px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+    padding: 0.5rem;
+}
+
+.app-user-dropdown-header {
+    padding: 0.7rem 0.8rem;
+}
+
+.app-navbar .dropdown-item,
+.app-navbar .dropdown-item-text {
+    border-radius: 10px;
+    padding: 0.65rem 0.8rem;
+}
+
+.app-navbar .dropdown-item:hover {
+    background: #f8fafc;
+}
+
+.app-navbar .badge {
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.38rem 0.55rem;
+}
+
+.app-navbar-mobile-user-card {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 16px;
+    background: #f8fafc;
+    padding: 0.85rem 1rem;
+}
+
+.app-mobile-user-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.app-mobile-user-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.app-mobile-user-role {
+    font-size: 0.92rem;
+    color: #64748b;
+}
+
+@media (max-width: 991.98px) {
+    .app-brand {
+        font-size: 1.05rem;
+    }
+
+    .app-navbar-collapse {
+        padding-top: 0.5rem;
+    }
+
+    .app-navbar-main-row {
+        display: block;
+    }
+
+    .app-navbar-nav {
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .app-navbar .btn,
+    .app-navbar .navbar-text {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .app-navbar .dropdown,
+    .app-navbar .dropdown-toggle {
+        width: 100%;
+    }
+
+    .app-navbar .dropdown-menu {
+        position: static !important;
+        transform: none !important;
+        width: 100%;
+        margin-top: 0.5rem;
+        box-shadow: none;
+    }
+}

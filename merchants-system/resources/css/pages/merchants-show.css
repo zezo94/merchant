@@ -1,0 +1,73 @@
+.merchant-show-page .timeline-box {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px;
+}
+
+.merchant-show-page .timeline-item {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background: #fcfcfd;
+    overflow: hidden;
+}
+
+.merchant-show-page .timeline-item + .timeline-item {
+    margin-top: 12px;
+}
+
+.merchant-show-page .timeline-header-btn {
+    width: 100%;
+    background: #fcfcfd;
+    border: 0;
+    text-align: inherit;
+    padding: 14px;
+}
+
+.merchant-show-page .timeline-header-btn:hover {
+    background: #f8f9fa;
+}
+
+.merchant-show-page .timeline-meta {
+    font-size: 0.92rem;
+    color: #6c757d;
+}
+
+.merchant-show-page .timeline-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.merchant-show-page .timeline-section-label {
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 6px;
+}
+
+.merchant-show-page .history-table th,
+.merchant-show-page .history-table td {
+    vertical-align: middle;
+}
+
+.merchant-show-page .old-value {
+    color: #b02a37;
+    font-weight: 600;
+}
+
+.merchant-show-page .new-value {
+    color: #146c43;
+    font-weight: 600;
+}
+
+.merchant-show-page .result-box {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    background: #f8f9fa;
+    padding: 12px;
+    height: 100%;
+}
+
+.merchant-show-page .result-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+}

@@ -1,0 +1,45 @@
+.timeline-box {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px;
+}
+
+.timeline-item {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background: #fcfcfd;
+    overflow: hidden;
+}
+
+.timeline-item + .timeline-item {
+    margin-top: 12px;
+}
+
+.timeline-header-btn {
+    width: 100%;
+    background: #fcfcfd;
+    border: 0;
+    text-align: inherit;
+    padding: 14px;
+}
+
+.timeline-header-btn:hover {
+    background: #f8f9fa;
+}
+
+.timeline-meta {
+    font-size: 0.92rem;
+    color: #6c757d;
+}
+
+.timeline-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.timeline-section-label {
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 6px;
+}

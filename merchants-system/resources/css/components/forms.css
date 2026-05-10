@@ -1,0 +1,11 @@
+.btn,
+.form-control,
+.form-select,
+textarea.form-control {
+    border-radius: 10px;
+}
+
+.filter-label {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}

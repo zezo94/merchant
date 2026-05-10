@@ -1,0 +1,10 @@
+.users-index-page .user-role-badge {
+    font-size: 0.85rem;
+    border-radius: 999px;
+    padding: 6px 10px;
+}
+
+.users-index-page .users-table th,
+.users-index-page .users-table td {
+    vertical-align: middle;
+}

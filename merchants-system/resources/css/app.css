@@ -1,11 +1,23 @@
-@import 'tailwindcss';
+@import "bootstrap/dist/css/bootstrap.min.css";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+/* =========================
+   Components
+========================= */
+@import "./components/base.css";
+@import "./components/layout.css";
+@import "./components/navbar.css";
+@import "./components/footer.css";
+@import "./components/alerts.css";
+@import "./components/cards.css";
+@import "./components/forms.css";
+@import "./components/tables.css";
+@import "./components/badges.css";
+@import "./components/timeline.css";
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+/* =========================
+   Pages
+========================= */
+@import "./pages/logs.css";
+@import "./pages/merchants-index.css";
+@import "./pages/merchants-show.css"; /* FIXED */
+@import "./pages/users.css";

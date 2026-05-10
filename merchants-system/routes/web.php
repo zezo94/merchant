@@ -1,10 +1,13 @@
 <?php
-use App\Http\Controllers\UserManagementController;
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LogsController;
 use App\Http\Controllers\MerchantController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserManagementController;
+
 /*
 |--------------------------------------------------------------------------
 | Guest Routes
@@ -23,13 +26,49 @@ Route::middleware('guest')->group(function () {
 */
 
 Route::middleware('auth')->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | Auth
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Home
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/', function () {
+        return redirect()->route('merchants.index');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Profile
+    |--------------------------------------------------------------------------
+    */
     Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])
         ->name('profile.password.edit');
 
     Route::put('/profile/change-password', [ProfileController::class, 'updatePassword'])
         ->name('profile.password.update');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Logs
+    |--------------------------------------------------------------------------
+    | الحماية الفعلية داخل LogsController على is_root
+    */
+    Route::get('/logs', [LogsController::class, 'index'])
+        ->name('logs.index');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users Management
+    |--------------------------------------------------------------------------
+    | محمية بـ manage users
+    | root يتجاوز كل شيء عبر Gate::before
+    */
     Route::get('/users', [UserManagementController::class, 'index'])
         ->middleware('permission:manage users')
         ->name('users.index');
@@ -54,16 +93,28 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:manage users')
         ->name('users.destroy');
 
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/users/{user}/reset-password', [UserManagementController::class, 'showResetPasswordForm'])
+        ->middleware('permission:manage users')
+        ->name('users.reset-password.form');
 
-    Route::get('/', function () {
-        return redirect()->route('merchants.index');
-    });
+    Route::put('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])
+        ->middleware('permission:manage users')
+        ->name('users.reset-password');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware('permission:view dashboard')
         ->name('dashboard');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Merchants - Print / Export / Inline Update
+    |--------------------------------------------------------------------------
+    */
     Route::get('/merchants/print', [MerchantController::class, 'print'])
         ->middleware('permission:print merchants')
         ->name('merchants.print');
@@ -76,6 +127,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:edit merchants')
         ->name('merchants.inlineUpdate');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Merchants CRUD
+    |--------------------------------------------------------------------------
+    */
     Route::get('/merchants', [MerchantController::class, 'index'])
         ->middleware('permission:view merchants')
         ->name('merchants.index');
@@ -103,6 +159,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/merchants/{merchant}', [MerchantController::class, 'destroy'])
         ->middleware('permission:delete merchants')
         ->name('merchants.destroy');
-}
 
-);
+    Route::get('/merchants/{merchant}/print-card', [MerchantController::class, 'printSingle'])
+        ->name('merchants.show.print');
+
+    Route::get('/merchants/{merchant}/export-card', [MerchantController::class, 'exportSingle'])
+        ->name('merchants.show.export');
+
+
+});

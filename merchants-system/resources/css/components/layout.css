@@ -1,0 +1,11 @@
+.app-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-shell {
+    flex: 1 0 auto;
+    padding-top: 24px;
+    padding-bottom: 32px;
+}

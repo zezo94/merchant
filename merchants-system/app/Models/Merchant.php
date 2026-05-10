@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Merchant extends Model
@@ -40,22 +41,22 @@ class Merchant extends Model
         'invited' => 'boolean',
     ];
 
-    public function phones()
+    public function phones(): HasMany
     {
         return $this->hasMany(MerchantPhone::class);
     }
 
-    public function mobiles()
+    public function mobiles(): HasMany
     {
         return $this->hasMany(MerchantMobile::class);
     }
 
-    public function emails()
+    public function emails(): HasMany
     {
         return $this->hasMany(MerchantEmail::class);
     }
 
-    public function faxes()
+    public function faxes(): HasMany
     {
         return $this->hasMany(MerchantFax::class);
     }
